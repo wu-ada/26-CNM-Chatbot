@@ -30,7 +30,7 @@ def get_response(user_query):
     print(context)
     st.session_state.context_log = [context]
     
-    llm = ChatOllama(model="llama3.1", temperature=0)
+    llm = ChatOllama(model="tinyllama", temperature=0)
     
     template = """
         Answer the question below according to the given context in a way that will be helpful to people potentially starting nonprofits asking the question(users of the chatbot).
@@ -121,10 +121,14 @@ with st.sidebar:
     # Language selection
     user_language = st.selectbox("Select your preferred language", list(languages.values()))
     language_code = list(languages.keys())[list(languages.values()).index(user_language)]
-    text_to_speech_choice = st.selectbox("Activate text to speech?", list(["Yes", "No"]))
+    translated_activate_text = translator.translate("Activate text to speech?", dest=language_code).text
+    translated_yes = translator.translate("Yes", dest=language_code).text
+    translated_no = translator.translate("No", dest=language_code).text
+    text_to_speech_choice = st.selectbox(translated_activate_text, list([translated_yes, translated_no]))
     
     greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
-    st.session_state.chat_history = [AIMessage(content=greeting)]
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = [AIMessage(content=greeting)]
 
     st.title("About Center for Nonprofit Management")
     about = """The Center for Nonprofit Management (CNM) is a non-profit organization that provides
@@ -134,10 +138,6 @@ with st.sidebar:
         through education, collaboration, and advocacy. To learn more, visit https://cnmsocal.org/."""
     translated_about = translator.translate(about, dest=language_code).text
     st.markdown(translated_about)
-    
-# greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
-# if "chat_history" not in st.session_state:
-#     st.session_state.chat_history = [AIMessage(content=greeting)]
 
 def text_to_speech(text):
     """Convert text to speech using gTTS and save it to a temporary file."""
@@ -151,7 +151,7 @@ for message in st.session_state.chat_history:
         with st.chat_message("AI"):
             st.write(message.content)
             # Add a button to play the audio
-            if text_to_speech_choice == "Yes":
+            if text_to_speech_choice == translated_yes:
                 translated_button = translator.translate("Play Audio", dest=language_code).text
                 if st.button(translated_button, key=f"play_{message.content[:10]}"):
                     audio_file = text_to_speech(message.content)
