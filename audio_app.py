@@ -5,16 +5,26 @@ from langchain_core.messages import AIMessage, HumanMessage
 import retriever
 from pinecone import Pinecone
 import streamlit as st
+from gtts import gTTS
 import warnings
+import tempfile
+import os
 warnings.filterwarnings('ignore')
 
 PINECONE_API_KEY="pcsk_44GEVQ_MUe9BzErbdfazWZQa2UWAmEapM83rLJJbHTc6fkdiQEj2o6JS7mNCvTY25XF3X9"
 
 pc = Pinecone(PINECONE_API_KEY)
 
+def text_to_speech(text):
+    """Convert text to speech using gTTS and save it to a temporary file."""
+    tts = gTTS(text=text, lang='en')
+    temp_audio_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+    tts.save(temp_audio_file.name)
+    return temp_audio_file.name
+
 def get_response(user_query):
     indexes = pc.list_indexes()
-    print('****INDEXES*****:',indexes)
+    print('*INDEXES**:',indexes)
     context = retriever.retrieve_from_pinecone(user_query)[:5]
     print(context)
     st.session_state.context_log = [context]
@@ -60,6 +70,11 @@ for message in st.session_state.chat_history:
     if isinstance(message, AIMessage):
         with st.chat_message("AI"):
             st.write(message.content)
+            # Add a button to play the audio
+            if st.button("Play Audio", key=f"play_{message.content[:10]}"):
+                audio_file = text_to_speech(message.content)
+                st.audio(audio_file, format="audio/mp3")
+                os.remove(audio_file)  # Clean up temporary file after playback
     elif isinstance(message, HumanMessage):
         with st.chat_message("Human"):
             st.write(message.content)

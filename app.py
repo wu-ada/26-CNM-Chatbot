@@ -5,14 +5,23 @@ from langchain_core.messages import AIMessage, HumanMessage
 import retriever
 from pinecone import Pinecone
 import streamlit as st
+from gtts import gTTS
 import warnings
-import streamlit as st
-from googletrans import Translator, LANGUAGES
+import tempfile
+import os
+from googletrans import Translator
 warnings.filterwarnings('ignore')
 
 PINECONE_API_KEY="pcsk_44GEVQ_MUe9BzErbdfazWZQa2UWAmEapM83rLJJbHTc6fkdiQEj2o6JS7mNCvTY25XF3X9"
 
 pc = Pinecone(PINECONE_API_KEY)
+
+def text_to_speech(text):
+    """Convert text to speech using gTTS and save it to a temporary file."""
+    tts = gTTS(text=text, lang='en')
+    temp_audio_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+    tts.save(temp_audio_file.name)
+    return temp_audio_file.name
 
 def get_response(user_query):
     indexes = pc.list_indexes()
@@ -24,8 +33,10 @@ def get_response(user_query):
     llm = ChatOllama(model="tinyllama", temperature=0)
     
     template = """
-        Answer the question below according to your knowledge in a way that will be helpful to people potentially starting nonprofits asking the question.
-        The following context is your only source of knowledge to answer from. Be direct in your answers. Act like you know what you are talking about.
+        Answer the question below according to the given context in a way that will be helpful to people potentially starting nonprofits asking the question(users of the chatbot).
+        The following context is you(the chatbot's) only source of knowledge to answer from. The chatbot's answers should be direct. The chatbot is speaking on behalf of CNM (Center for Nonprofit Management). The chatbot should act like it knows what it is talking about. If
+        the chatbot is given a query it does not know the answer to, it will tell the user that that information is behind a paywall, and that the user
+        can look into CNM's services for more, and direct them to this link: https://cnmsocal.org
     """
     prompt = ChatPromptTemplate.from_template(template)
     chain = prompt | llm | StrOutputParser()
@@ -109,9 +120,9 @@ with st.sidebar:
     # Language selection
     user_language = st.selectbox("Select your preferred language", list(languages.values()))
     language_code = list(languages.keys())[list(languages.values()).index(user_language)]
+    
     greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = [AIMessage(content=greeting)]
+    st.session_state.chat_history = [AIMessage(content=greeting)]
 
     st.title("About Center for Nonprofit Management")
     about = """The Center for Nonprofit Management (CNM) is a non-profit organization that provides
@@ -125,11 +136,24 @@ with st.sidebar:
 # greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
 # if "chat_history" not in st.session_state:
 #     st.session_state.chat_history = [AIMessage(content=greeting)]
+
+def text_to_speech(text):
+    """Convert text to speech using gTTS and save it to a temporary file."""
+    tts = gTTS(text=text, lang=language_code)
+    temp_audio_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+    tts.save(temp_audio_file.name)
+    return temp_audio_file.name
     
 for message in st.session_state.chat_history:
     if isinstance(message, AIMessage):
         with st.chat_message("AI"):
             st.write(message.content)
+            # Add a button to play the audio
+            translated_button = translator.translate("Play Audio", dest=language_code).text
+            if st.button(translated_button, key=f"play_{message.content[:10]}"):
+                audio_file = text_to_speech(message.content)
+                st.audio(audio_file, format="audio/mp3")
+                os.remove(audio_file)  # Clean up temporary file after playback
     elif isinstance(message, HumanMessage):
         with st.chat_message("Human"):
             st.write(message.content)
