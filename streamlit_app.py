@@ -23,7 +23,7 @@ def get_response(user_query):
     
     template = """
         Answer the question below according to your knowledge in a way that will be helpful to people potentially starting nonprofits asking the question.
-        The following context is your only source of knowledge to answer from. Be direct in your answers.
+        The following context is your only source of knowledge to answer from. Be direct in your answers. Act like you know what you are talking about.
         Context: {context}
         User question: {user_question}
     """
