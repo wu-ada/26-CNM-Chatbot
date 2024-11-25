@@ -24,10 +24,8 @@ def get_response(user_query):
     llm = ChatOllama(model="tinyllama", temperature=0)
     
     template = """
-        Answer the question below according to your knowledge in a way that will be helpful to students asking the question.
-        The following context is your only source of knowledge to answer from.
-        Context: {context}
-        User question: {user_question}
+        Answer the question below according to your knowledge in a way that will be helpful to people potentially starting nonprofits asking the question.
+        The following context is your only source of knowledge to answer from. Be direct in your answers. Act like you know what you are talking about.
     """
     prompt = ChatPromptTemplate.from_template(template)
     chain = prompt | llm | StrOutputParser()
