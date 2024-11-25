@@ -4,6 +4,10 @@ from llama_index.llms.openai import OpenAI
 from llama_index.core import Settings, VectorStoreIndex, SimpleDirectoryReader
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 import os
+from llama_index.core import Document
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.extractors import TitleExtractor
+from llama_index.core.ingestion import IngestionPipeline, IngestionCache
 
 # Page config
 st.set_page_config(page_title="RAG Chatbot", page_icon="🤖", layout="wide")
@@ -48,18 +52,36 @@ def get_llm():
 
 @st.cache_resource
 def initialize_rag(_llm):
-    """Initialize the RAG pipeline components"""
-    # Configure settings
-    Settings.llm = _llm
-    Settings.embed_model = HuggingFaceEmbedding(
-        model_name="BAAI/bge-small-en-v1.5"
-    )
-    
-    # Load and index documents
-    documents = SimpleDirectoryReader("data").load_data()
-    index = VectorStoreIndex.from_documents(documents)
-    
-    return index
+   """Initialize the RAG pipeline components"""
+   # Configure settings
+   Settings.llm = _llm
+   Settings.embed_model = HuggingFaceEmbedding(
+       model_name="BAAI/bge-small-en-v1.5",
+   )
+ 
+   # Load and index documents
+   documents = SimpleDirectoryReader("data").load_data()
+
+
+   # create the pipeline with transformations
+   pipeline = IngestionPipeline(
+       transformations=[
+           SentenceSplitter(chunk_size=200, chunk_overlap=50),
+           TitleExtractor(),
+           HuggingFaceEmbedding(),
+       ],
+   )
+
+
+   # run the pipeline
+   nodes = pipeline.run(documents=documents)
+   index = VectorStoreIndex(nodes)
+  
+
+
+   return index
+
+
 
 def generate_response(prompt: str, index):
     """Generate streaming response from RAG query"""
