@@ -21,7 +21,7 @@ def get_response(user_query):
     print(context)
     st.session_state.context_log = [context]
     
-    llm = ChatOllama(model="llama3.1", temperature=0)
+    llm = ChatOllama(model="tinyllama", temperature=0)
     
     template = """
         Answer the question below according to your knowledge in a way that will be helpful to students asking the question.
@@ -100,6 +100,9 @@ languages = {
     "eo": "Wêreldtaal (Esperanto)",
 }
 
+if "context_log" not in st.session_state:
+    st.session_state.context_log = ["Retrieved context will be displayed here"]
+
 with st.sidebar:
     st.image("cnm-logo.svg")
     
@@ -108,27 +111,22 @@ with st.sidebar:
     # Language selection
     user_language = st.selectbox("Select your preferred language", list(languages.values()))
     language_code = list(languages.keys())[list(languages.values()).index(user_language)]
-
-    st.session_state.chat_history = []
-
     greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
-    st.session_state.chat_history.append(AIMessage(content=greeting))
-    
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = [AIMessage(content=greeting)]
+
     st.title("About Center for Nonprofit Management")
     about = """The Center for Nonprofit Management (CNM) is a non-profit organization that provides
         resources and support to non-profit organizations in Southern California. They offer training,
         consulting, and other services to help non-profits achieve their goals and stay sustainable.
         CNM's mission is to promote the growth and development of non-profit organizations
-        through education, collaboration, and advocacy. Visit https://cnmsocal.org/ to learn more."""
+        through education, collaboration, and advocacy. To learn more, visit https://cnmsocal.org/."""
     translated_about = translator.translate(about, dest=language_code).text
     st.markdown(translated_about)
     
-if "context_log" not in st.session_state:
-    st.session_state.context_log = ["Retrieved context will be displayed here"]
-    
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-
+# greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
+# if "chat_history" not in st.session_state:
+#     st.session_state.chat_history = [AIMessage(content=greeting)]
     
 for message in st.session_state.chat_history:
     if isinstance(message, AIMessage):
@@ -138,26 +136,23 @@ for message in st.session_state.chat_history:
         with st.chat_message("Human"):
             st.write(message.content)
 
-# greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
-# st.session_state.chat_history.append(AIMessage(content=greeting))
-
 question = translator.translate("Ask us a question here...", dest=language_code).text
 user_query = st.chat_input(question)
     
 if user_query is not None and user_query != "":
     with st.chat_message("Human"):
         st.markdown(user_query)
-        
-    user_query = translator.translate(user_query, dest='en').text
+    
     st.session_state.chat_history.append(HumanMessage(content=user_query))
+    english_query = translator.translate(user_query, dest='en').text
     
     with st.chat_message("AI"):
-        response = get_response(user_query)
+        response = get_response(english_query)
         # Capture the complete response from the stream
         full_response = ""
         for part in response:
             full_response += part  # Collect all parts
         translated_response = translator.translate(full_response, dest=language_code).text
-        st.write(f"Response in {user_language}: {translated_response}")
+        st.write(f"{translated_response}")
     
-    st.session_state.chat_history.append(AIMessage(content=response))
+    st.session_state.chat_history.append(AIMessage(content=translated_response))

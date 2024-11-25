@@ -1,0 +1,5 @@
+streamlit==1.36.0
+langchain-core
+langchain-community
+pinecone-client
+googletrans==4.0.0-rc1
