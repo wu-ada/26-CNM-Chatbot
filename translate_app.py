@@ -21,7 +21,7 @@ def get_response(user_query):
     print(context)
     st.session_state.context_log = [context]
     
-    llm = ChatOllama(model="tinyllama", temperature=0)
+    llm = ChatOllama(model="llama3.1", temperature=0)
     
     template = """
         Answer the question below according to your knowledge in a way that will be helpful to students asking the question.
@@ -115,11 +115,11 @@ with st.sidebar:
     st.session_state.chat_history.append(AIMessage(content=greeting))
     
     st.title("About Center for Nonprofit Management")
-    about = """The [Center for Nonprofit Management](https://cnmsocal.org/) (CNM) is a non-profit organization that provides
+    about = """The Center for Nonprofit Management (CNM) is a non-profit organization that provides
         resources and support to non-profit organizations in Southern California. They offer training,
         consulting, and other services to help non-profits achieve their goals and stay sustainable.
         CNM's mission is to promote the growth and development of non-profit organizations
-        through education, collaboration, and advocacy."""
+        through education, collaboration, and advocacy. Visit https://cnmsocal.org/ to learn more."""
     translated_about = translator.translate(about, dest=language_code).text
     st.markdown(translated_about)
     

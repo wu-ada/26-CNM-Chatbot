@@ -19,7 +19,7 @@ def get_response(user_query):
     print(context)
     st.session_state.context_log = [context]
     
-    llm = ChatOllama(model="tinyllama", temperature=0)
+    llm = ChatOllama(model="llama3.1", temperature=0)
     
     template = """
         Answer the question below according to your knowledge in a way that will be helpful to students asking the question.
@@ -63,7 +63,7 @@ for message in st.session_state.chat_history:
             st.write(message.content)
 
 
-user_query = st.chat_input("Ask us a question here...")
+user_query = st.chat_input("Ask us your question here...")
 if user_query is not None and user_query != "":
     st.session_state.chat_history.append(HumanMessage(content=user_query))
     
@@ -74,19 +74,3 @@ if user_query is not None and user_query != "":
         response = st.write_stream(get_response(user_query))
     
     st.session_state.chat_history.append(AIMessage(content=response))
-    
-from googletrans import Translator, LANGUAGES
-import streamlit as st
-
-# Create a translator object
-translator = Translator()
-
-# Select a language
-target_language = st.selectbox("Select Language", LANGUAGES.keys())
-
-# Input text
-text_to_translate = st.text_area("Enter text to translate:")
-
-if st.button("Translate"):
-    translated_text = translator.translate(text_to_translate, dest=target_language)
-    st.write(f"Translated Text: {translated_text.text}")
