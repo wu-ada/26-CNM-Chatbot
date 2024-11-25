@@ -16,6 +16,8 @@ PINECONE_API_KEY="pcsk_44GEVQ_MUe9BzErbdfazWZQa2UWAmEapM83rLJJbHTc6fkdiQEj2o6JS7
 
 pc = Pinecone(PINECONE_API_KEY)
 
+st.set_page_config(page_title="CNM Chatbot", page_icon="cnm-icon.png", layout="wide")
+
 def text_to_speech(text):
     """Convert text to speech using gTTS and save it to a temporary file."""
     tts = gTTS(text=text, lang='en')
@@ -47,9 +49,6 @@ def get_response(user_query):
         "user_question": user_query
     })
     
-st.set_page_config(page_title="CNM Chatbot", page_icon="cnm-icon.png", layout="wide")
-st.image("cnm-page-header.png")  
-st.title("CNM Chatbot")
 
 # Dictionary of languages in their native forms with corresponding ISO codes
 languages = {
@@ -121,16 +120,18 @@ with st.sidebar:
     # Language selection
     user_language = st.selectbox("Select your preferred language", list(languages.values()))
     language_code = list(languages.keys())[list(languages.values()).index(user_language)]
+    greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = [AIMessage(content=greeting)]
+            
+    #Text to speech selection
     translated_activate_text = translator.translate("Activate text to speech?", dest=language_code).text
     translated_yes = translator.translate("Yes", dest=language_code).text
     translated_no = translator.translate("No", dest=language_code).text
     text_to_speech_choice = st.selectbox(translated_activate_text, list([translated_yes, translated_no]))
-    
-    greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = [AIMessage(content=greeting)]
 
-    st.title("About Center for Nonprofit Management")
+    translated_sidebar_title = translator.translate("About Center for Nonprofit Management", dest=language_code).text
+    st.title(translated_sidebar_title)
     about = """The Center for Nonprofit Management (CNM) is a non-profit organization that provides
         resources and support to non-profit organizations in Southern California. They offer training,
         consulting, and other services to help non-profits achieve their goals and stay sustainable.
@@ -138,6 +139,10 @@ with st.sidebar:
         through education, collaboration, and advocacy. To learn more, visit https://cnmsocal.org/."""
     translated_about = translator.translate(about, dest=language_code).text
     st.markdown(translated_about)
+
+translated_title = translator.translate("CNM Chatbot", dest=language_code).text
+st.image("cnm-page-header.png")  
+st.title(translated_title)
 
 def text_to_speech(text):
     """Convert text to speech using gTTS and save it to a temporary file."""
