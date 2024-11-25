@@ -37,6 +37,7 @@ def get_response(user_query):
         The following context is you(the chatbot's) only source of knowledge to answer from. The chatbot's answers should be direct. The chatbot is speaking on behalf of CNM (Center for Nonprofit Management). The chatbot should act like it knows what it is talking about. If
         the chatbot is given a query it does not know the answer to, it will tell the user that that information is behind a paywall, and that the user
         can look into CNM's services for more, and direct them to this link: https://cnmsocal.org
+         User question: {user_question}
     """
     prompt = ChatPromptTemplate.from_template(template)
     chain = prompt | llm | StrOutputParser()
@@ -120,6 +121,7 @@ with st.sidebar:
     # Language selection
     user_language = st.selectbox("Select your preferred language", list(languages.values()))
     language_code = list(languages.keys())[list(languages.values()).index(user_language)]
+    text_to_speech_choice = st.selectbox("Activate text to speech?", list(["Yes", "No"]))
     
     greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
     st.session_state.chat_history = [AIMessage(content=greeting)]
@@ -149,11 +151,12 @@ for message in st.session_state.chat_history:
         with st.chat_message("AI"):
             st.write(message.content)
             # Add a button to play the audio
-            translated_button = translator.translate("Play Audio", dest=language_code).text
-            if st.button(translated_button, key=f"play_{message.content[:10]}"):
-                audio_file = text_to_speech(message.content)
-                st.audio(audio_file, format="audio/mp3")
-                os.remove(audio_file)  # Clean up temporary file after playback
+            if text_to_speech_choice == "Yes":
+                translated_button = translator.translate("Play Audio", dest=language_code).text
+                if st.button(translated_button, key=f"play_{message.content[:10]}"):
+                    audio_file = text_to_speech(message.content)
+                    st.audio(audio_file, format="audio/mp3")
+                    os.remove(audio_file)  # Clean up temporary file after playback
     elif isinstance(message, HumanMessage):
         with st.chat_message("Human"):
             st.write(message.content)
