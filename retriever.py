@@ -1,4 +1,4 @@
-from langchain_pinecone import PineconeVectorStore
+from langchain_pinecone import vectorstores
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from pinecone import Pinecone
 import os
@@ -16,7 +16,7 @@ def retrieve_from_pinecone(user_query="What information do you have on Instance 
     
     print("Index stats:", index.describe_index_stats())
     
-    pinecone = PineconeVectorStore.from_existing_index(index_name=index_name, embedding=embeddings)
+    pinecone = vectorstores.Pinecone.from_existing_index(index_name=index_name, embedding=embeddings)
     context = pinecone.similarity_search(user_query)[:5]
     
     return context
