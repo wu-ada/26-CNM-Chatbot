@@ -125,16 +125,44 @@ with st.sidebar:
     translated_yes = translator.translate("Yes", dest=language_code).text
     translated_no = translator.translate("No", dest=language_code).text
     text_to_speech_choice = st.selectbox(translated_activate_text, list([translated_no, translated_yes]))
-        
-    translated_sidebar_title = translator.translate("About Center for Nonprofit Management", dest=language_code).text
-    st.title(translated_sidebar_title)
-    about = """The Center for Nonprofit Management (CNM) is a non-profit organization that provides
-        resources and support to non-profit organizations in Southern California. They offer training,
-        consulting, and other services to help non-profits achieve their goals and stay sustainable.
-        CNM's mission is to promote the growth and development of non-profit organizations
-        through education, collaboration, and advocacy. To learn more, visit https://cnmsocal.org/."""
-    translated_about = translator.translate(about, dest=language_code).text
-    st.markdown(translated_about)
+    
+    selection = st.sidebar.selectbox("Additional Resources", ["About CNM", "Talk to an Employee", "View All Resources"])
+    if selection == "About CNM":
+        translated_sidebar_title = translator.translate("About Center for Nonprofit Management", dest=language_code).text
+        st.title(translated_sidebar_title)
+        about = """The Center for Nonprofit Management (CNM) is a non-profit organization that provides
+            resources and support to non-profit organizations in Southern California. They offer training,
+            consulting, and other services to help non-profits achieve their goals and stay sustainable.
+            CNM's mission is to promote the growth and development of non-profit organizations
+            through education, collaboration, and advocacy. To learn more, visit https://cnmsocal.org/."""
+        translated_about = translator.translate(about, dest=language_code).text
+        st.markdown(translated_about)
+    elif selection == "Talk to an Employee":
+        print("placeholder")
+    elif selection == "View All Resources":
+        # Set the folder path
+        folder_path = os.path.join(os.getcwd(), "Data")
+
+        # List all files in the folder
+        files = os.listdir(folder_path)
+
+        # Filter to include only documents (optional)
+        document_files = [f for f in files if f.endswith(('.pdf', '.docx', '.txt'))]  
+
+        # Display file names and provide download buttons
+        for file_name in document_files:            
+            # Full path to the file
+            file_path = os.path.join(folder_path, file_name)
+            # Allow the user to download the file
+            with open(file_path, "rb") as file:
+                st.download_button(
+                    label=f"{file_name}",
+                    data=file,
+                    file_name=file_name,
+                    mime="application/octet-stream"
+                )
+
+            
 
 translated_title = translator.translate("CNM Chatbot", dest=language_code).text
 st.image("cnm-page-header.png")  
@@ -173,7 +201,7 @@ if user_query is not None and user_query != "":
     english_query = translator.translate(user_query, dest='en').text
     
     with st.chat_message("AI"):
-        response = get_response(english_query)
+        response, document = get_response(english_query)
         # Capture the complete response from the stream
         full_response = ""
         for part in response:
