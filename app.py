@@ -18,13 +18,6 @@ pc = Pinecone(PINECONE_API_KEY)
 
 st.set_page_config(page_title="CNM Chatbot", page_icon="cnm-icon.png", layout="wide")
 
-def text_to_speech(text):
-    """Convert text to speech using gTTS and save it to a temporary file."""
-    tts = gTTS(text=text, lang='en')
-    temp_audio_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
-    tts.save(temp_audio_file.name)
-    return temp_audio_file.name
-
 def get_response(user_query):
     indexes = pc.list_indexes()
     print('****INDEXES*****:',indexes)
@@ -121,17 +114,18 @@ with st.sidebar:
     user_language = st.selectbox("Select your preferred language", list(languages.values()))
     language_code = list(languages.keys())[list(languages.values()).index(user_language)]
     greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
+            
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = [AIMessage(content=greeting)]
     if language_code != "en":
-        st.session_state.chat_history.append(AIMessage(content=greeting))
-            
+        st.session_state.chat_history = [AIMessage(content=greeting)]
+                
     #Text to speech selection
     translated_activate_text = translator.translate("Activate text to speech?", dest=language_code).text
     translated_yes = translator.translate("Yes", dest=language_code).text
     translated_no = translator.translate("No", dest=language_code).text
     text_to_speech_choice = st.selectbox(translated_activate_text, list([translated_no, translated_yes]))
-
+        
     translated_sidebar_title = translator.translate("About Center for Nonprofit Management", dest=language_code).text
     st.title(translated_sidebar_title)
     about = """The Center for Nonprofit Management (CNM) is a non-profit organization that provides
