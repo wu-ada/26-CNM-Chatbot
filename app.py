@@ -206,7 +206,7 @@ if user_query is not None and user_query != "":
     english_query = translator.translate(user_query, dest='en').text
     
     with st.chat_message("AI"):
-        response = get_response(english_query)
+        response, document = get_response(english_query)
         # Capture the complete response from the stream
         full_response = ""
         for part in response:
