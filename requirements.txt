@@ -19,6 +19,7 @@ comm
 dataclasses-json
 debugpy
 decorator
+deep-translator
 Deprecated
 dirtyjson
 distro

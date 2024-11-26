@@ -9,7 +9,7 @@ from gtts import gTTS
 import warnings
 import tempfile
 import os
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 warnings.filterwarnings('ignore')
 
 PINECONE_API_KEY="pcsk_44GEVQ_MUe9BzErbdfazWZQa2UWAmEapM83rLJJbHTc6fkdiQEj2o6JS7mNCvTY25XF3X9"
@@ -49,11 +49,11 @@ if "context_log" not in st.session_state:
     st.session_state.context_log = ["Retrieved context will be displayed here"]
     
 # Initialize the Google Translator
-translator = Translator()
 
 # Simplified translation function
 def translate(text):
-    return translator.translate(text, dest=language_code).text
+    translation = GoogleTranslator(source='auto', target=language_code).translate(text)
+    return translation
 
 # Dictionary of languages in their native forms with corresponding ISO codes
 languages = {
@@ -203,7 +203,7 @@ if user_query is not None and user_query != "":
         st.markdown(user_query)
     
     st.session_state.chat_history.append(HumanMessage(content=user_query))
-    english_query = translator.translate(user_query, dest='en').text
+    english_query = GoogleTranslator(source='auto', target='en').translate(text)
     
     with st.chat_message("AI"):
         response, document = get_response(english_query)
