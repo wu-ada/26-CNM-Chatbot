@@ -36,10 +36,10 @@ def get_response(user_query):
     
     template = """
         Answer the question below according to the given context in a way that will be helpful to people potentially starting nonprofits asking the question(users of the chatbot).
-        The following context is you(the chatbot's) only source of knowledge to answer from. The chatbot's answers should be direct. The chatbot is speaking on behalf of CNM (Center for Nonprofit Management). The chatbot should act like it knows what it is talking about. If
+        The following context is you (the chatbot's) only source of knowledge to answer from. The chatbot's answers should be direct. The chatbot is speaking on behalf of CNM (Center for Nonprofit Management). The chatbot should act like it knows what it is talking about. If
         the chatbot is given a query it does not know the answer to, it will tell the user that that information is behind a paywall, and that the user
-        can look into CNM's services for more, and direct them to this link: https://cnmsocal.org
-         User question: {user_question}
+        can look into CNM's services for more, and direct them to this link: https://cnmsocal.org. At the end of your answer, please also provide the name of the document that you got this information from.
+        User question: {user_question}
     """
     prompt = ChatPromptTemplate.from_template(template)
     chain = prompt | llm | StrOutputParser()
@@ -123,12 +123,14 @@ with st.sidebar:
     greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = [AIMessage(content=greeting)]
+    if language_code != "en":
+        st.session_state.chat_history.append(AIMessage(content=greeting))
             
     #Text to speech selection
     translated_activate_text = translator.translate("Activate text to speech?", dest=language_code).text
     translated_yes = translator.translate("Yes", dest=language_code).text
     translated_no = translator.translate("No", dest=language_code).text
-    text_to_speech_choice = st.selectbox(translated_activate_text, list([translated_yes, translated_no]))
+    text_to_speech_choice = st.selectbox(translated_activate_text, list([translated_no, translated_yes]))
 
     translated_sidebar_title = translator.translate("About Center for Nonprofit Management", dest=language_code).text
     st.title(translated_sidebar_title)
