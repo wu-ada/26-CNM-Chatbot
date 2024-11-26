@@ -29,9 +29,11 @@ def get_response(user_query):
     
     template = """
         Answer the question below according to the given context in a way that will be helpful to people potentially starting nonprofits asking the question(users of the chatbot).
-        The following context is you (the chatbot's) only source of knowledge to answer from. The chatbot's answers should be direct. The chatbot is speaking on behalf of CNM (Center for Nonprofit Management). The chatbot should act like it knows what it is talking about. If
+        The following context is you (the chatbot's) only source of knowledge to answer from. The chatbot's answers should be direct.
+        The chatbot is speaking on behalf of CNM (Center for Nonprofit Management). The chatbot should act like it knows what it is talking about. If
         the chatbot is given a query it does not know the answer to, it will tell the user that that information is behind a paywall, and that the user
-        can look into CNM's services for more, and direct them to this link: https://cnmsocal.org. At the end of your answer, please also provide the name of the document that you got this information from.
+        can look into CNM's services for more, and direct them to this link: https://cnmsocal.org. At the end of your answer, please also provide the
+        exact name of the document file within the provided pinecone database or exact link on the website that you got this information from.
         User question: {user_question}
     """
     prompt = ChatPromptTemplate.from_template(template)
@@ -42,6 +44,16 @@ def get_response(user_query):
         "user_question": user_query
     })
     
+
+if "context_log" not in st.session_state:
+    st.session_state.context_log = ["Retrieved context will be displayed here"]
+    
+# Initialize the Google Translator
+translator = Translator()
+
+# Simplified translation function
+def translate(text):
+    return translator.translate(text, dest=language_code).text
 
 # Dictionary of languages in their native forms with corresponding ISO codes
 languages = {
@@ -102,18 +114,14 @@ languages = {
     "eo": "Wêreldtaal (Esperanto)",
 }
 
-if "context_log" not in st.session_state:
-    st.session_state.context_log = ["Retrieved context will be displayed here"]
-
 with st.sidebar:
     st.image("cnm-logo.svg")
     
-    # Initialize the Google Translator
-    translator = Translator()
     # Language selection
     user_language = st.selectbox("Select your preferred language", list(languages.values()))
     language_code = list(languages.keys())[list(languages.values()).index(user_language)]
-    greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
+
+    greeting = translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?")
             
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = [AIMessage(content=greeting)]
@@ -121,25 +129,24 @@ with st.sidebar:
         st.session_state.chat_history = [AIMessage(content=greeting)]
                 
     #Text to speech selection
-    translated_activate_text = translator.translate("Activate text to speech?", dest=language_code).text
-    translated_yes = translator.translate("Yes", dest=language_code).text
-    translated_no = translator.translate("No", dest=language_code).text
-    text_to_speech_choice = st.selectbox(translated_activate_text, list([translated_no, translated_yes]))
+    text_to_speech_choice = st.selectbox(translate("Activate text to speech?"), list([translate("No"), translate("Yes")]))
     
-    selection = st.sidebar.selectbox("Additional Resources", ["About CNM", "Talk to an Employee", "View All Resources"])
-    if selection == "About CNM":
-        translated_sidebar_title = translator.translate("About Center for Nonprofit Management", dest=language_code).text
+    additional_resources = st.sidebar.selectbox(translate("Additional Resources"), [translate("About CNM"), translate("Talk to an Employee"), translate("View All Resources")])
+    
+    # Display additional resource based on selection
+    if additional_resources == translate("About CNM"):
+        translated_sidebar_title = translate("About Center for Nonprofit Management")
         st.title(translated_sidebar_title)
         about = """The Center for Nonprofit Management (CNM) is a non-profit organization that provides
             resources and support to non-profit organizations in Southern California. They offer training,
             consulting, and other services to help non-profits achieve their goals and stay sustainable.
             CNM's mission is to promote the growth and development of non-profit organizations
             through education, collaboration, and advocacy. To learn more, visit https://cnmsocal.org/."""
-        translated_about = translator.translate(about, dest=language_code).text
+        translated_about = translate(about)
         st.markdown(translated_about)
-    elif selection == "Talk to an Employee":
+    elif additional_resources == translate("Talk to an Employee"):
         print("placeholder")
-    elif selection == "View All Resources":
+    elif additional_resources == translate("View All Resources"):
         # Set the folder path
         folder_path = os.path.join(os.getcwd(), "Data")
 
@@ -156,15 +163,13 @@ with st.sidebar:
             # Allow the user to download the file
             with open(file_path, "rb") as file:
                 st.download_button(
-                    label=f"{file_name}",
+                    label=f"{translate(file_name)}",
                     data=file,
                     file_name=file_name,
                     mime="application/octet-stream"
                 )
 
-            
-
-translated_title = translator.translate("CNM Chatbot", dest=language_code).text
+translated_title = translate("CNM Chatbot")
 st.image("cnm-page-header.png")  
 st.title(translated_title)
 
@@ -180,8 +185,8 @@ for message in st.session_state.chat_history:
         with st.chat_message("AI"):
             st.write(message.content)
             # Add a button to play the audio
-            if text_to_speech_choice == translated_yes:
-                translated_button = translator.translate("Play Audio", dest=language_code).text
+            if text_to_speech_choice == translate("Yes"):
+                translated_button = translate("Play Audio")
                 if st.button(translated_button, key=f"play_{message.content[:10]}"):
                     audio_file = text_to_speech(message.content)
                     st.audio(audio_file, format="audio/mp3")
@@ -190,7 +195,7 @@ for message in st.session_state.chat_history:
         with st.chat_message("Human"):
             st.write(message.content)
 
-question = translator.translate("Ask us a question here...", dest=language_code).text
+question = translate("Ask us a question here...")
 user_query = st.chat_input(question)
     
 if user_query is not None and user_query != "":
@@ -206,7 +211,7 @@ if user_query is not None and user_query != "":
         full_response = ""
         for part in response:
             full_response += part  # Collect all parts
-        translated_response = translator.translate(full_response, dest=language_code).text
+        translated_response = translate(full_response)
         st.write(f"{translated_response}")
     
     st.session_state.chat_history.append(AIMessage(content=translated_response))
