@@ -25,7 +25,7 @@ def get_response(user_query):
     print(context)
     st.session_state.context_log = [context]
     
-    llm = ChatOllama(model="llama3.1", temperature=0)
+    llm = ChatOllama(model="tinyllama", temperature=0)
     
     template = """
         Answer the question below according to the given context in a way that will be helpful to people potentially starting nonprofits asking the question(users of the chatbot).
@@ -60,7 +60,7 @@ languages = {
     "en": "English",
     "es": "Español (Spanish)",
     "zh-CN": "中文 (简体) (Chinese Simplified)",
-   "af": "Afrikaans",
+    "af": "Afrikaans",
     "sq": "Shqip (Albanian)",
     "am": "አማርኛ (Amharic)",
     "ar": "العربية (Arabic)",
@@ -204,7 +204,7 @@ with st.sidebar:
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = [AIMessage(content=greeting)]
         
-    if greeting not in st.session_state.chat_history:
+    if AIMessage(greeting) not in st.session_state.chat_history:
         st.session_state.chat_history =[AIMessage(content=greeting)]
                 
     #Text to speech selection
