@@ -12,7 +12,7 @@ import os
 from deep_translator import GoogleTranslator
 warnings.filterwarnings('ignore')
 
-PINECONE_API_KEY="pcsk_44GEVQ_MUe9BzErbdfazWZQa2UWAmEapM83rLJJbHTc6fkdiQEj2o6JS7mNCvTY25XF3X9"
+PINECONE_API_KEY=st.secrets["PINECONE_API_KEY"]
 
 pc = Pinecone(PINECONE_API_KEY)
 
@@ -25,7 +25,7 @@ def get_response(user_query):
     print(context)
     st.session_state.context_log = [context]
     
-    llm = ChatOllama(model="tinyllama", temperature=0)
+    llm = ChatOllama(model="llama3.1", temperature=0)
     
     template = """
         Answer the question below according to the given context in a way that will be helpful to people potentially starting nonprofits asking the question(users of the chatbot).
