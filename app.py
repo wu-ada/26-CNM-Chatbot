@@ -9,7 +9,9 @@ from gtts import gTTS
 import warnings
 import tempfile
 import os
-from googletrans import Translator
+from deep_translator import GoogleTranslator
+
+# from googletrans import Translator
 warnings.filterwarnings('ignore')
 
 PINECONE_API_KEY="pcsk_44GEVQ_MUe9BzErbdfazWZQa2UWAmEapM83rLJJbHTc6fkdiQEj2o6JS7mNCvTY25XF3X9"
@@ -18,13 +20,6 @@ pc = Pinecone(PINECONE_API_KEY)
 
 st.set_page_config(page_title="CNM Chatbot", page_icon="cnm-icon.png", layout="wide")
 
-def text_to_speech(text):
-    """Convert text to speech using gTTS and save it to a temporary file."""
-    tts = gTTS(text=text, lang='en')
-    temp_audio_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
-    tts.save(temp_audio_file.name)
-    return temp_audio_file.name
-
 def get_response(user_query):
     indexes = pc.list_indexes()
     print('****INDEXES*****:',indexes)
@@ -32,7 +27,7 @@ def get_response(user_query):
     print(context)
     st.session_state.context_log = [context]
     
-    llm = ChatOllama(model="tinyllama", temperature=0)
+    llm = ChatOllama(model="llama3.1", temperature=0)
     
     template = """
         Answer the question below according to the given context in a way that will be helpful to people potentially starting nonprofits asking the question(users of the chatbot).
@@ -54,63 +49,145 @@ def get_response(user_query):
 languages = {
     "en": "English",
     "es": "Español (Spanish)",
-    "zh-cn": "简体中文 (Simplified Chinese)",
+    "zh-CN": "中文 (简体) (Chinese Simplified)",
     "af": "Afrikaans",
     "sq": "Shqip (Albanian)",
     "am": "አማርኛ (Amharic)",
     "ar": "العربية (Arabic)",
     "hy": "Հայերեն (Armenian)",
+    "as": "অসমীয়া (Assamese)",
+    "ay": "Aymara",
+    "az": "Azərbaycan (Azerbaijani)",
+    "bm": "Bamanankan (Bambara)",
     "eu": "Euskara (Basque)",
+    "be": "Беларуская (Belarusian)",
     "bn": "বাংলা (Bengali)",
+    "bho": "Bhojpuri",
+    "bs": "Bosanski (Bosnian)",
     "bg": "Български (Bulgarian)",
     "ca": "Català (Catalan)",
-    "zh-tw": "繁體中文 (Traditional Chinese)",
+    "ceb": "Cebuano",
+    "ny": "Chichewa",
+    "zh-TW": "中文 (繁體) (Chinese Traditional)",
+    "co": "Corsu (Corsican)",
     "hr": "Hrvatski (Croatian)",
-    "cs": "Česky (Czech)",
+    "cs": "Čeština (Czech)",
     "da": "Dansk (Danish)",
+    "dv": "Divehi",
+    "doi": "Dogri",
     "nl": "Nederlands (Dutch)",
+    "eo": "Esperanto",
     "et": "Eesti (Estonian)",
-    "el": "Ελληνικά (Greek)",
-    "fa": "فارسی (Persian)",
+    "ee": "Eʋegbe (Ewe)",
+    "tl": "Filipino",
     "fi": "Suomi (Finnish)",
     "fr": "Français (French)",
+    "fy": "Fries (Frisian)",
+    "gl": "Galego (Galician)",
+    "ka": "ქართული (Georgian)",
     "de": "Deutsch (German)",
+    "el": "Ελληνικά (Greek)",
+    "gn": "Aña Guarani (Guarani)",
     "gu": "ગુજરાતી (Gujarati)",
-    "hi": "हिंदी (Hindi)",
+    "ht": "Kreyòl Ayisyen (Haitian Creole)",
+    "ha": "Hausa",
+    "haw": "Hawaiian",
+    "iw": "עברית (Hebrew)",
+    "hi": "हिन्दी (Hindi)",
+    "hmn": "Hmong",
     "hu": "Magyar (Hungarian)",
-    "id": "Indonesia (Indonesian)",
+    "is": "Íslenska (Icelandic)",
+    "ig": "Igbo",
+    "ilo": "Ilokano (Ilocano)",
+    "id": "Bahasa Indonesia (Indonesian)",
+    "ga": "Gaeilge (Irish)",
     "it": "Italiano (Italian)",
     "ja": "日本語 (Japanese)",
+    "jw": "Basa Jawa (Javanese)",
     "kn": "ಕನ್ನಡ (Kannada)",
+    "kk": "Қазақ тілі (Kazakh)",
+    "km": "ភាសាខ្មែរ (Khmer)",
+    "rw": "Ikinyarwanda (Kinyarwanda)",
+    "gom": "Konkani",
     "ko": "한국어 (Korean)",
-    "lt": "Lietuvių (Lithuanian)",
+    "kri": "Krio",
+    "ku": "Kurdî (Kurdish Kurmanji)",
+    "ckb": "کوردی (Kurdish Sorani)",
+    "ky": "Кыргызча (Kyrgyz)",
+    "lo": "ລາວ (Lao)",
+    "la": "Latina (Latin)",
     "lv": "Latviešu (Latvian)",
+    "ln": "Lingála (Lingala)",
+    "lt": "Lietuvių (Lithuanian)",
+    "lg": "Luganda",
+    "lb": "Lëtzebuergesch (Luxembourgish)",
     "mk": "Македонски (Macedonian)",
+    "mai": "मैथिली (Maithili)",
+    "mg": "Malagasy",
+    "ms": "Melayu (Malay)",
     "ml": "മലയാളം (Malayalam)",
+    "mt": "Malti (Maltese)",
+    "mi": "Māori (Maori)",
     "mr": "मराठी (Marathi)",
+    "mni-Mtei": "Meitei (Manipuri)",
+    "lus": "Mizo",
+    "mn": "Монгол (Mongolian)",
+    "my": "မြန်မာ (Myanmar)",
+    "ne": "नेपाली (Nepali)",
     "no": "Norsk (Norwegian)",
+    "or": "ଓଡ଼ିଆ (Odia)",
+    "om": "Oromo",
+    "ps": "پښتو (Pashto)",
+    "fa": "فارسی (Persian)",
     "pl": "Polski (Polish)",
     "pt": "Português (Portuguese)",
+    "pa": "ਪੰਜਾਬੀ (Punjabi)",
+    "qu": "Quechua",
     "ro": "Română (Romanian)",
     "ru": "Русский (Russian)",
+    "sm": "Samoan",
+    "sa": "संस्कृत (Sanskrit)",
+    "gd": "Gàidhlig (Scots Gaelic)",
+    "nso": "Sepedi",
     "sr": "Српски (Serbian)",
-    "si": "සිංහල (Sinhalese)",
-    "sk": "Slovenský (Slovak)",
+    "st": "Sesotho",
+    "sn": "Shona",
+    "sd": "سنڌي (Sindhi)",
+    "si": "සිංහල (Sinhala)",
+    "sk": "Slovenčina (Slovak)",
     "sl": "Slovenščina (Slovenian)",
+    "so": "Soomaali (Somali)",
+    "su": "Basa Sunda (Sundanese)",
+    "sw": "Kiswahili (Swahili)",
     "sv": "Svenska (Swedish)",
+    "tg": "Тоҷикӣ (Tajik)",
     "ta": "தமிழ் (Tamil)",
+    "tt": "Татарча (Tatar)",
     "te": "తెలుగు (Telugu)",
     "th": "ไทย (Thai)",
+    "ti": "ትግርኛ (Tigrinya)",
+    "ts": "Xitsonga (Tsonga)",
     "tr": "Türkçe (Turkish)",
+    "tk": "Türkmençe (Turkmen)",
+    "ak": "Twi",
     "uk": "Українська (Ukrainian)",
+    "ur": "اردو (Urdu)",
+    "ug": "ئۇيغۇرچە (Uyghur)",
+    "uz": "O'zbekcha (Uzbek)",
     "vi": "Tiếng Việt (Vietnamese)",
     "cy": "Cymraeg (Welsh)",
-    "ga": "Gaeilge (Irish)",
-    "eo": "Wêreldtaal (Esperanto)",
+    "xh": "isiXhosa (Xhosa)",
+    "yi": "ייִדיש (Yiddish)",
+    "yo": "Yorùbá (Yoruba)",
+    "zu": "Zulu"
 }
 
 if "context_log" not in st.session_state:
     st.session_state.context_log = ["Retrieved context will be displayed here"]
+
+def translate(text):
+    translation = GoogleTranslator(source='auto', target=language_code).translate(text)
+    return translation
 
 with st.sidebar:
     st.image("cnm-logo.svg")
@@ -120,9 +197,11 @@ with st.sidebar:
     # Language selection
     user_language = st.selectbox("Select your preferred language", list(languages.values()))
     language_code = list(languages.keys())[list(languages.values()).index(user_language)]
-    greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
+    # greeting = translator.translate("Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot. How can I assist you today?", dest=language_code).text
+    # st.write (greeting)
     if "chat_history" not in st.session_state:
-        st.session_state.chat_history = [AIMessage(content=greeting)]
+        st.session_state.chat_history = []
+
             
     #Text to speech selection
     translated_activate_text = translator.translate("Activate text to speech?", dest=language_code).text
@@ -144,27 +223,95 @@ translated_title = translator.translate("CNM Chatbot", dest=language_code).text
 st.image("cnm-page-header.png")  
 st.title(translated_title)
 
+greeting = """Hi there! Welcome to the Center for Nonprofit Management's Resource Chatbot.
+               How can I assist you today?"""
+translated_greeting = translator.translate(greeting, dest=language_code).text
+st.write (translated_greeting)
+
+
+# def text_to_speech(text):
+#     """Convert text to speech using gTTS and save it to a temporary file."""
+#     tts = gTTS(text=text, lang=language_code)
+#     temp_audio_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+#     tts.save(temp_audio_file.name)
+#     return temp_audio_file.name
+    
+# for message in st.session_state.chat_history:
+#     if isinstance(message, AIMessage):
+#         with st.chat_message("AI"):
+#             st.write(message.content)
+#             # Add a button to play the audio
+#             if text_to_speech_choice == translated_yes:
+#                 translated_button = translator.translate("Play Audio", dest=language_code).text
+#                 if st.button(translated_button, key=f"play_{message.content[:10]}"):
+#                     audio_file = text_to_speech(message.content)
+#                     st.audio(audio_file, format="audio/mp3")
+#                     os.remove(audio_file)  # Clean up temporary file after playback
+#     elif isinstance(message, HumanMessage):
+#         with st.chat_message("Human"):
+#             st.write(message.content)
+
+# question = translator.translate("Ask us a question here...", dest=language_code).text
+# user_query = st.chat_input(question)
+    
+# if user_query is not None and user_query != "":
+#     with st.chat_message("Human"):
+#         st.markdown(user_query)
+    
+#     st.session_state.chat_history.append(HumanMessage(content=user_query))
+#     english_query = translator.translate(user_query, dest='en').text
+    
+#     with st.chat_message("AI"):
+#         response = get_response(english_query)
+#         # Capture the complete response from the stream
+#         full_response = ""
+#         for part in response:
+#             full_response += part  # Collect all parts
+#         translated_response = translator.translate(full_response, dest=language_code).text
+#         st.write(f"{translated_response}")
+    
+#     st.session_state.chat_history.append(AIMessage(content=translated_response))
+
+# BEGINNING OF NEW CODE
+
+# if text_to_speech_choice == translated_yes:
+#     audio_file = text_to_speech(greeting, lang=language_code)
+#     st.audio(audio_file, format="audio/mp3")
+#     os.remove(audio_file)  # Clean up after playing
+
+
 def text_to_speech(text):
     """Convert text to speech using gTTS and save it to a temporary file."""
     tts = gTTS(text=text, lang=language_code)
+    # tts = gTTS(text=text, lang=lang)
     temp_audio_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
     tts.save(temp_audio_file.name)
     return temp_audio_file.name
-    
+
+def play_audio_on_response(response_text):
+    # if text_to_speech_choice == translated_yes:
+    audio_file = text_to_speech(response_text, lang=language_code)
+    st.audio(audio_file, format="audio/mp3")
+    os.remove(audio_file)  # Clean up after playing
+
+# play_audio_on_response(translated_greeting)
+
 for message in st.session_state.chat_history:
     if isinstance(message, AIMessage):
         with st.chat_message("AI"):
             st.write(message.content)
             # Add a button to play the audio
             if text_to_speech_choice == translated_yes:
-                translated_button = translator.translate("Play Audio", dest=language_code).text
-                if st.button(translated_button, key=f"play_{message.content[:10]}"):
-                    audio_file = text_to_speech(message.content)
-                    st.audio(audio_file, format="audio/mp3")
-                    os.remove(audio_file)  # Clean up temporary file after playback
+                 translated_button = translate("Play Audio")
+                # translated_button = translator.translate("Play Audio", dest=language_code).text
+                if st.button(translated_button, key=f"play_{hash(message.content)}"):
+
+                # if st.button(translated_button, key=f"play_{message.content[:10]}"):
+                    play_audio_on_response(message.content)
     elif isinstance(message, HumanMessage):
         with st.chat_message("Human"):
             st.write(message.content)
+
 
 question = translator.translate("Ask us a question here...", dest=language_code).text
 user_query = st.chat_input(question)
@@ -178,7 +325,6 @@ if user_query is not None and user_query != "":
     
     with st.chat_message("AI"):
         response = get_response(english_query)
-        # Capture the complete response from the stream
         full_response = ""
         for part in response:
             full_response += part  # Collect all parts
@@ -186,3 +332,4 @@ if user_query is not None and user_query != "":
         st.write(f"{translated_response}")
     
     st.session_state.chat_history.append(AIMessage(content=translated_response))
+    play_audio_on_response(translated_response)
