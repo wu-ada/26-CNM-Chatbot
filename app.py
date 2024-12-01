@@ -10,9 +10,15 @@ import warnings
 import tempfile
 import os
 from deep_translator import GoogleTranslator
+import csv
+import speech_recognition as sr
+
 warnings.filterwarnings('ignore')
 
-PINECONE_API_KEY=st.secrets["PINECONE_API_KEY"]
+# PINECONE_API_KEY=st.secrets["PINECONE_API_KEY"]
+
+# pc = Pinecone(PINECONE_API_KEY)
+PINECONE_API_KEY="pcsk_44GEVQ_MUe9BzErbdfazWZQa2UWAmEapM83rLJJbHTc6fkdiQEj2o6JS7mNCvTY25XF3X9"
 
 pc = Pinecone(PINECONE_API_KEY)
 
@@ -224,7 +230,71 @@ with st.sidebar:
         translated_about = translate(about)
         st.markdown(translated_about)
     elif additional_resources == translate("Talk to an Employee"):
-        print("placeholder")
+        
+        with st.form(key="user_form", clear_on_submit=True):
+            translated_title = translate("Please fill out the form below with any extra questions/comments:")
+            st.write(translated_title)
+            # Define the fieldnames for the CSV
+            fieldnames = ['first_name', 'last_name', 'email', 'subject', 'message']
+            
+            translated_first_name = translate("First Name*")
+            translated_last_name = translate("Last Name*")
+            translated_email = translate("Email*")
+            translated_subject= translate("Subject*")
+            translated_message = translate("Message*")
+            translated_submit_button = translate("Submit")
+            translated_success = translate("Your response has been saved!")
+            translated_error = translate("Please fill out all fields.")
+            translated_download = translate("Download CSV")
+            translated_required = translate('<p style="font-size: 13px;">*Required fields</p>')
+
+            first_name = st.text_input(translated_first_name)
+            last_name = st.text_input(translated_last_name)
+            email = st.text_input(translated_email)
+            subject = st.text_input(translated_subject)
+            message = st.text_area(translated_message)
+            st.markdown(translated_required, unsafe_allow_html=True)
+
+            # Submit button
+            submit_button = st.form_submit_button(label=translated_submit_button)
+
+            # after form is submitted, the datais stored in the CSV file
+            if submit_button:
+                if first_name and last_name and email and subject and message:
+                    # Append the data to the CSV file
+                    with open('responses.csv', mode='a', newline='') as file:
+                        writer = csv.DictWriter(file, fieldnames=fieldnames)
+                        # Write the header only once, if file is empty
+                        if file.tell() == 0:
+                            writer.writeheader()
+                        writer.writerow({
+                            'first_name': first_name,
+                            'last_name': last_name,
+                            'email': email,
+                            'subject': subject,
+                            'message': message
+                        })
+                    st.success(translated_success)
+                else:
+                    st.error(translated_error)
+    
+           
+        import pandas as pd
+
+        # Read the CSV with saved questions
+        df = pd.read_csv('responses.csv')
+
+        # Converts DataFrame to CSV format for download
+        csv = df.to_csv(index=False)
+
+        # download the CSV
+        st.download_button(
+            label=translated_download,
+            data=csv,
+            file_name='responses.csv',
+            mime='text/csv'
+        )
+
     elif additional_resources == translate("View All Resources"):
         # Set the folder path
         folder_path = os.path.join(os.getcwd(), "Data")
@@ -252,24 +322,35 @@ translated_title = translate("CNM Chatbot")
 st.image("cnm-page-header.png")  
 st.title(translated_title)
 
+
 def text_to_speech(text):
     """Convert text to speech using gTTS and save it to a temporary file."""
     tts = gTTS(text=text, lang=language_code)
     temp_audio_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
     tts.save(temp_audio_file.name)
     return temp_audio_file.name
+
+def play_audio_on_response(response_text):
+    if text_to_speech_choice == translate("Yes"):
+                translated_button = translate("Play Audio")
+                if st.button(translated_button, key=f"play_{response_text[:10]}"):
+                    audio_file = text_to_speech(response_text)
+                    st.audio(audio_file, format="audio/mp3")
+                    os.remove(audio_file)  # Clean up after playing
     
 for message in st.session_state.chat_history:
     if isinstance(message, AIMessage):
         with st.chat_message("AI"):
-            st.write(message.content)
+            with st.spinner(translate("Loading...")):
+                st.write(message.content)
             # Add a button to play the audio
-            if text_to_speech_choice == translate("Yes"):
-                translated_button = translate("Play Audio")
-                if st.button(translated_button, key=f"play_{message.content[:10]}"):
-                    audio_file = text_to_speech(message.content)
-                    st.audio(audio_file, format="audio/mp3")
-                    os.remove(audio_file)  # Clean up temporary file after playback
+            # if text_to_speech_choice == translate("Yes"):
+            #     translated_button = translate("Play Audio")
+            #     if st.button(translated_button, key=f"play_{message.content[:10]}"):
+                play_audio_on_response(message.content)
+                    # audio_file = text_to_speech(message.content)
+                    # st.audio(audio_file, format="audio/mp3")
+                    # os.remove(audio_file)  # Clean up temporary file after playback
     elif isinstance(message, HumanMessage):
         with st.chat_message("Human"):
             st.write(message.content)
@@ -285,12 +366,55 @@ if user_query is not None and user_query != "":
     english_query = GoogleTranslator(source='auto', target='en').translate(user_query)
     
     with st.chat_message("AI"):
-        response = get_response(english_query)
-        # Capture the complete response from the stream
-        full_response = ""
-        for part in response:
-            full_response += part  # Collect all parts
-        translated_response = translate(full_response)
-        st.write(f"{translated_response}")
+        with st.spinner(translate("Loading...")):
+
+            response = get_response(english_query)
+            # Capture the complete response from the stream
+            full_response = ""
+            for part in response:
+                full_response += part  # Collect all parts
+            translated_response = translate(full_response)
+            st.write(f"{translated_response}")
+            play_audio_on_response(translated_response)
     
     st.session_state.chat_history.append(AIMessage(content=translated_response))
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+# import streamlit as st
+
+# st.set_page_config(
+#     page_title="TESTING",
+#     page_icon="cnm-icon.png",
+#     layout="wide",
+#     initial_sidebar_state="expanded",
+#     menu_items={
+#         'Get Help': 'https://www.extremelycoolapp.com/help',
+#         'Report a bug': "https://www.extremelycoolapp.com/bug",
+#         'About': "# This is a header. This is an *extremely* cool app!"
+#     }
+# )
+# pages = {
+#     "Home": [
+#         st.Page("code.py", title="Chat with chatbot"),
+#         # st.Page("manage_account.py", title="Manage your account"),
+#     ],
+#     "Resources": [
+#         # st.Page("code.py", title="Learn about us"),
+#         st.Page("ask.py", title="Ask questions"),
+#     ],
+# }
+
+# pg = st.navigation(pages)
+# pg.run()
