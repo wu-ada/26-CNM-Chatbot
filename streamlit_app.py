@@ -1,11 +1,17 @@
+import streamlit as st
+st.set_page_config(page_title="CNM Chatbot", page_icon="cnm-icon.png", layout="wide")
+st.image("cnm-page-header.png")  
+st.title("CNM Chatbot")
 from langchain_community.chat_models import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.messages import AIMessage, HumanMessage
 import retriever
 from pinecone import Pinecone
-import streamlit as st
+
 import warnings
+from app import calculate_rouge_score 
+
 warnings.filterwarnings('ignore')
 
 PINECONE_API_KEY="pcsk_44GEVQ_MUe9BzErbdfazWZQa2UWAmEapM83rLJJbHTc6fkdiQEj2o6JS7mNCvTY25XF3X9"
@@ -36,9 +42,7 @@ def get_response(user_query):
         "user_question": user_query
     })
     
-st.set_page_config(page_title="CNM Chatbot", page_icon="cnm-icon.png", layout="wide")
-st.image("cnm-page-header.png")  
-st.title("CNM Chatbot")
+
 
 if "context_log" not in st.session_state:
     st.session_state.context_log = ["Retrieved context will be displayed here"]
@@ -67,11 +71,22 @@ for message in st.session_state.chat_history:
 user_query = st.chat_input("Ask us your question here...")
 if user_query is not None and user_query != "":
     st.session_state.chat_history.append(HumanMessage(content=user_query))
-    
+   
     with st.chat_message("Human"):
         st.markdown(user_query)
-    
+   
     with st.chat_message("AI"):
         response = st.write_stream(get_response(user_query))
-    
+        rouge_score = calculate_rouge_score(user_query, response)  # Assuming you have a function like this
+
+
+        # Display the chatbot's response
+        st.write(response)
+       
+        # Display the ROUGE score
+        with st.expander("Developer Option: View ROUGE Score"):
+            st.write(f"ROUGE Score: {rouge_score}")
+
+
     st.session_state.chat_history.append(AIMessage(content=response))
+
