@@ -1,10 +1,13 @@
+import streamlit as st
+# st.set_page_config(page_title="CNM Chatbot", page_icon="cnm-icon.png", layout="wide")
+
 from langchain_community.chat_models import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.messages import AIMessage, HumanMessage
 import retriever
 from pinecone import Pinecone
-import streamlit as st
+
 from gtts import gTTS
 import warnings
 import tempfile
@@ -12,6 +15,7 @@ import os
 from deep_translator import GoogleTranslator
 import csv
 import speech_recognition as sr
+from rouge_score import rouge_scorer
 
 warnings.filterwarnings('ignore')
 
@@ -22,17 +26,15 @@ PINECONE_API_KEY="pcsk_44GEVQ_MUe9BzErbdfazWZQa2UWAmEapM83rLJJbHTc6fkdiQEj2o6JS7
 
 pc = Pinecone(PINECONE_API_KEY)
 
-st.set_page_config(page_title="CNM Chatbot", page_icon="cnm-icon.png", layout="wide")
-
 def get_response(user_query):
     indexes = pc.list_indexes()
     print('****INDEXES*****:',indexes)
     context = retriever.retrieve_from_pinecone(user_query)[:5]
     print(context)
     st.session_state.context_log = [context]
-    
+   
     llm = ChatOllama(model="llama3.1", temperature=0)
-    
+   
     template = """
         Answer the question below according to the given context in a way that will be helpful to people potentially starting nonprofits asking the question(users of the chatbot).
         The following context is you (the chatbot's) only source of knowledge to answer from. The chatbot's answers should be direct.
@@ -44,16 +46,70 @@ def get_response(user_query):
     """
     prompt = ChatPromptTemplate.from_template(template)
     chain = prompt | llm | StrOutputParser()
-    
-    return chain.stream({
+
+
+
+
+    response = chain.stream({
         "context": context,
         "user_question": user_query
     })
-    
+   
+    # Extract the best-matching reference for scoring
+    reference = context[0] if context else ""
+   
+    # Compute ROUGE score
+    rouge_scores = calculate_rouge_score(reference, response)
+   
+    # Log scores and response
+    st.session_state.rouge_log = rouge_scores
+    st.session_state.response_log = response
+   
+    return response
+
+
+st.sidebar.markdown("### ROUGE Scores")
+if "rouge_log" in st.session_state:
+    scores = st.session_state.rouge_log
+    st.write(f"**ROUGE-1**: {scores['ROUGE-1']:.2f}")
+    st.write(f"**ROUGE-2**: {scores['ROUGE-2']:.2f}")
+    st.write(f"**ROUGE-L**: {scores['ROUGE-L']:.2f}")
+
+
+
 
 if "context_log" not in st.session_state:
     st.session_state.context_log = ["Retrieved context will be displayed here"]
+
+
+
+
+def calculate_rouge_score(reference, response):
+    """
+    Calculate ROUGE scores (ROUGE-1, ROUGE-2, ROUGE-L) for evaluating text similarity.
     
+    Args:
+    - reference (str): The reference text to compare against (e.g., context or ground truth).
+    - response (str): The generated response text to evaluate.
+    
+    Returns:
+    - dict: A dictionary with ROUGE-1, ROUGE-2, and ROUGE-L scores.
+    """
+    # Initialize the ROUGE scorer
+    scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
+    
+    # Calculate the ROUGE scores
+    scores = scorer.score(reference, response)
+    
+    # Extract the scores into a dictionary
+    rouge_scores = {
+        'ROUGE-1': scores['rouge1'].fmeasure,
+        'ROUGE-2': scores['rouge2'].fmeasure,
+        'ROUGE-L': scores['rougeL'].fmeasure
+    }
+    
+    return rouge_scores
+
 # Initialize the Google Translator
 
 # Simplified translation function
