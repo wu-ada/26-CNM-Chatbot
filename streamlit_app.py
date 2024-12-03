@@ -10,7 +10,7 @@ import retriever
 from pinecone import Pinecone
 
 import warnings
-from app import calculate_rouge_score 
+
 
 warnings.filterwarnings('ignore')
 
@@ -77,16 +77,11 @@ if user_query is not None and user_query != "":
    
     with st.chat_message("AI"):
         response = st.write_stream(get_response(user_query))
-        rouge_score = calculate_rouge_score(user_query, response)  # Assuming you have a function like this
 
 
         # Display the chatbot's response
         st.write(response)
-       
-        # Display the ROUGE score
-        with st.expander("Developer Option: View ROUGE Score"):
-            st.write(f"ROUGE Score: {rouge_score}")
-
+    
 
     st.session_state.chat_history.append(AIMessage(content=response))
 
