@@ -129,6 +129,7 @@ regex
 requests
 requests-toolbelt
 rich
+rouge-score
 rpds-py
 safetensors
 scikit-learn
@@ -138,6 +139,7 @@ six
 smmap
 sniffio
 soupsieve
+speechrecognition
 SQLAlchemy
 stack-data
 streamlit
