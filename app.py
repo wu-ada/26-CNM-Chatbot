@@ -1,5 +1,4 @@
 import streamlit as st
-# st.set_page_config(page_title="CNM Chatbot", page_icon="cnm-icon.png", layout="wide")
 
 from langchain_community.chat_models import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
@@ -15,7 +14,7 @@ import os
 from deep_translator import GoogleTranslator
 import csv
 import speech_recognition as sr
-from rouge_score import rouge_scorer
+
 
 warnings.filterwarnings('ignore')
 
@@ -58,22 +57,10 @@ def get_response(user_query):
     # Extract the best-matching reference for scoring
     reference = context[0] if context else ""
    
-    # Compute ROUGE score
-    rouge_scores = calculate_rouge_score(reference, response)
-   
-    # Log scores and response
-    st.session_state.rouge_log = rouge_scores
+
     st.session_state.response_log = response
    
     return response
-
-
-st.sidebar.markdown("### ROUGE Scores")
-if "rouge_log" in st.session_state:
-    scores = st.session_state.rouge_log
-    st.write(f"**ROUGE-1**: {scores['ROUGE-1']:.2f}")
-    st.write(f"**ROUGE-2**: {scores['ROUGE-2']:.2f}")
-    st.write(f"**ROUGE-L**: {scores['ROUGE-L']:.2f}")
 
 
 
@@ -83,32 +70,6 @@ if "context_log" not in st.session_state:
 
 
 
-
-def calculate_rouge_score(reference, response):
-    """
-    Calculate ROUGE scores (ROUGE-1, ROUGE-2, ROUGE-L) for evaluating text similarity.
-    
-    Args:
-    - reference (str): The reference text to compare against (e.g., context or ground truth).
-    - response (str): The generated response text to evaluate.
-    
-    Returns:
-    - dict: A dictionary with ROUGE-1, ROUGE-2, and ROUGE-L scores.
-    """
-    # Initialize the ROUGE scorer
-    scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
-    
-    # Calculate the ROUGE scores
-    scores = scorer.score(reference, response)
-    
-    # Extract the scores into a dictionary
-    rouge_scores = {
-        'ROUGE-1': scores['rouge1'].fmeasure,
-        'ROUGE-2': scores['rouge2'].fmeasure,
-        'ROUGE-L': scores['rougeL'].fmeasure
-    }
-    
-    return rouge_scores
 
 # Initialize the Google Translator
 
