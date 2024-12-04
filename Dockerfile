@@ -7,6 +7,11 @@ WORKDIR /app
 # Copy the requirements.txt to the container
 COPY requirements.txt .
 
+# Install Rust and Cargo
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+RUN source $HOME/.cargo/env
+
+
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
