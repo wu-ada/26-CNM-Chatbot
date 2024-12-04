@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8501:8501"  # Map the container's port 8501 to the host machine's port 8501
+    environment:
+      - STREAMLIT_SERVER_PORT=8501  # Set Streamlit server port
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0  # Set Streamlit server address to allow external access
+    volumes:
+      - .:/app  # Mount the current directory into the container (useful for development)
+    restart: always  # Automatically restart the container if it stops unexpectedly
