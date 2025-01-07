@@ -29,9 +29,10 @@ This project was created by five students from the Break Through Tech AI program
 - **Hugging Face**: AI embedding models for improved contextual understanding.
 - **OpenAI / Ollama**: Integration with advanced LLMs for high-quality responses.
 
-## 🧑‍💻 Usage  
+## 🧑‍💻 Usage
+- Download Ollama and make sure llama3.1 runs on your local device (more instructions [here](https://www.kdnuggets.com/ollama-tutorial-running-llms-locally-made-super-simple))
 - Open the app in your browser (usually at http://localhost:8501).
-- Select your preferred LLM (OpenAI or Ollama) in the sidebar.
+- Select your preferred language and audio settings
 - Ask the chatbot any question about CNM resources or related topics.
 - View responses instantly and interactively.
 
